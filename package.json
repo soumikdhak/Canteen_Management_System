@@ -1,0 +1,17 @@
+{
+  "name": "petpujo",
+  "version": "1.0.0",
+  "description": "manage canteen for solving some real life issues",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "nodemon": "^3.1.10",
+    "prettier": "^3.6.2"
+  }
+}
