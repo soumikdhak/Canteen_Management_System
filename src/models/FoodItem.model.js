@@ -5,7 +5,8 @@ const foodItemSchema = new mongoose.Schema({
     name: { 
         type: String, 
         required: true, 
-        trim: true 
+        trim: true,
+        unique: true 
     },
 
     description: {
@@ -24,12 +25,13 @@ const foodItemSchema = new mongoose.Schema({
     },
 
     image: {
-         type: String 
+         type: String,
+         default: "" 
     },
 
     isAvailable: {
          type: Boolean,
-         default: true 
+         default: false 
     },
 
 },
