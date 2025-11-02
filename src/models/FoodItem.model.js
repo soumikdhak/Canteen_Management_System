@@ -26,7 +26,8 @@ const foodItemSchema = new mongoose.Schema({
 
     image: {
          type: String,
-         default: "" 
+         default: process.env.DEFAULT_FOODITEM_URL ||
+         "https://res.cloudinary.com/dkmutafep/image/upload/v1762113987/default_foodItem_cbzdgo.jpg"
     },
 
     isAvailable: {
