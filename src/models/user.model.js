@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema(
 
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, minlength: 6 },
-    role: { type: String, enum: ["Admin", "Staff", "Student"], default: "Student" },
+    role: { type: String, enum: ["Admin", "Staff", "Student"], default: "Student", required: true },
     phoneNumber: { type: String, trim: true },
     avatar: { type: String , default: "" },
     refreshToken: String,
