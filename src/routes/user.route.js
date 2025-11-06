@@ -1,8 +1,10 @@
-import { Router} from "express";
+import { Router } from "express";
 import { registerUser } from "../controllers/user.controllers.js";
+import upload from "../middlewares/multer.middleware.js";
 
 const router = Router();
 
-router.route("/register").post(registerUser);
+// Now multer will parse form-data into req.body
+router.route("/register").post(upload.none(), registerUser);
 
-export {router as userRoute};
+export { router as userRoute };

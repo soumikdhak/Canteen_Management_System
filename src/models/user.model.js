@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 const studentSchema = new mongoose.Schema({
-  studentCode: { type: String, required: true, unique: true, trim: true },
+  studentCode: { type: String, unique: true, trim: true },
   department: { type: String, trim: true },
   batch: { type: Number },
   balance: { type: Number, default: 0 },
