@@ -3,12 +3,12 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 const studentSchema = new mongoose.Schema({
-  studentCode: { type: String, unique: true, trim: true },
+  studentCode: { type: String, trim: true }, // removed "required"
   department: { type: String, trim: true },
   batch: { type: Number },
   balance: { type: Number, default: 0 },
   orderHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
-});
+}, { _id: false }); // prevent new _id for subdocument
 
 const staffSchema = new mongoose.Schema({
   age: Number,
@@ -17,11 +17,11 @@ const staffSchema = new mongoose.Schema({
   salary: { type: Number, default: 0 },
   shift: { type: String, enum: ["Morning", "Evening"], default: "Morning" },
   joiningDate: Date,
-});
+}, { _id: false });
 
 const adminSchema = new mongoose.Schema({
   designation: { type: String, trim: true },
-});
+}, { _id: false });
 
 const userSchema = new mongoose.Schema(
   {
@@ -46,35 +46,40 @@ const userSchema = new mongoose.Schema(
 
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, minlength: 6 },
-    role: { type: String, enum: ["admin", "staff", "student"], default: "student", required: true },
-    phoneNumber: { type: String, trim: true },
-    avatar: { 
-      type: String, 
-      default: process.env.DEFAULT_AVATAR_URL || 
-      "https://res.cloudinary.com/dkmutafep/image/upload/v1762113536/Default_avatar_u26d4p.jpg"
+    role: {
+      type: String,
+      enum: ["admin", "staff", "student"], // lowercase ✅
+      default: "student",
+      required: true
     },
+    phoneNumber: { type: String, trim: true },
+
+    avatar: {
+      type: String,
+      default:
+        process.env.DEFAULT_AVATAR_URL ||
+        "https://res.cloudinary.com/dkmutafep/image/upload/v1762113536/Default_avatar_u26d4p.jpg",
+    },
+
     refreshToken: String,
 
-    studentInfo: { type: studentSchema, default: {} },
-    staffInfo: { type: staffSchema, default: {} },
-    adminInfo: { type: adminSchema, default: {} },
+    studentInfo: { type: studentSchema, default: undefined },
+    staffInfo: { type: staffSchema, default: undefined },
+    adminInfo: { type: adminSchema, default: undefined },
   },
   { timestamps: true }
 );
 
-//  Password hashing
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
-//  Compare password
 userSchema.methods.isPasswordMatch = async function (plainPassword) {
-  return await bcrypt.compare(plainPassword, this.password);
+  return bcrypt.compare(plainPassword, this.password);
 };
 
-//  JWT access token
 userSchema.methods.generateAccessToken = function () {
   return jwt.sign(
     {
@@ -88,7 +93,6 @@ userSchema.methods.generateAccessToken = function () {
   );
 };
 
-//  JWT refresh token
 userSchema.methods.generateRefreshToken = function () {
   return jwt.sign(
     { _id: this._id },

@@ -22,20 +22,16 @@ const registerUser = asyncHandler(async (req, res) => {
     batch
   } = req.body;
 
-  // Basic validation
+  // 🧩 1. Basic validation
   if ([name, email, password, role, phoneNumber].some(field => !field || field.trim() === "")) {
-    throw new apiError(400, "All fields are required");
+    throw new apiError(400, "All required fields must be provided");
   }
-  
-  console.log(req.body); // ✅ will show your form data now
 
-
-  // Check if user already exists
+  // 🧩 2. Check if user already exists
   const existedUser = await User.findOne({ email });
   if (existedUser) throw new apiError(409, "User with this email already exists");
 
-  
-  // Create base user
+  // 🧩 3. Create new user
   const user = new User({
     name,
     email,
@@ -44,28 +40,104 @@ const registerUser = asyncHandler(async (req, res) => {
     phoneNumber
   });
 
-  // Attach role-specific data
+  // 🧩 4. Attach role-specific data
   if (role === "student") {
     user.studentInfo = { studentCode, department, batch };
-  }
-  if (role === "staff") {
+  } else if (role === "staff") {
     user.staffInfo = { age, address, position, shift, joiningDate };
-  }
-  if (role === "admin") {
+  } else if (role === "admin") {
     user.adminInfo = { designation };
   }
 
+  // 🧩 5. Save the user
   await user.save();
 
+  // 🧩 6. Generate tokens
+  const accessToken = user.generateAccessToken();
+  const refreshToken = user.generateRefreshToken();
+
+  // Store refresh token in DB
+  user.refreshToken = refreshToken;
+  await user.save({ validateBeforeSave: false });
+
+  // 🧩 7. Fetch created user without sensitive data
   const createdUser = await User.findById(user._id).select("-password -refreshToken");
 
-  if (!createdUser) {
-    throw new apiError(500, "Something went wrong while registering the user");
-  }
+  if (!createdUser) throw new apiError(500, "Error while creating user");
 
+  // 🧩 8. Cookie options
+  const options = {
+    httpOnly: true,
+    secure: true, // set true only in production with HTTPS
+    sameSite: "None"
+  };
+
+  // 🧩 9. Send response
   return res
     .status(201)
-    .json(new apiResponse(200, createdUser, "User registered successfully"));
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new apiResponse(
+        201,
+        {
+          user: createdUser,
+          accessToken,
+          refreshToken
+        },
+        "User registered successfully"
+      )
+    );
 });
 
-export { registerUser };
+
+//login controller
+const loginUser = asyncHandler(async (req, res) => {
+  const { email,userId, password } = req.body;
+
+  if (!email && !password)
+    throw new apiError(400, "Email and password are required");
+
+  console.log("Incoming email:", email);
+  const user = await User.findOne({
+        $or: [{userId}, {email}]
+  })
+  console.log("User found:", user);
+
+  if (!user) throw new apiError(404, "User does not exist");
+
+  const isPasswordValid = await user.isPasswordMatch(password);
+  if (!isPasswordValid) throw new apiError(401, "Invalid user credentials");
+
+  const accessToken = user.generateAccessToken();
+  const refreshToken = user.generateRefreshToken();
+
+  user.refreshToken = refreshToken;
+  await user.save({ validateBeforeSave: false });
+
+  const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new apiResponse(
+        200,
+        {
+          user: loggedInUser,
+          accessToken,
+          refreshToken,
+        },
+        "User logged in successfully"
+      )
+    );
+});
+
+
+export { registerUser, loginUser };
