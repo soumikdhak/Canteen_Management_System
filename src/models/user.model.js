@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 const studentSchema = new mongoose.Schema({
-  studentCode: { type: String, trim: true }, // removed "required"
+  studentCode: { type: String, trim: true, unique:true}, // removed "required"
   department: { type: String, trim: true },
   batch: { type: Number },
   balance: { type: Number, default: 0 },
@@ -50,7 +50,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["admin", "staff", "student"], // lowercase ✅
       default: "student",
-      required: true
     },
     phoneNumber: { type: String, trim: true },
 
