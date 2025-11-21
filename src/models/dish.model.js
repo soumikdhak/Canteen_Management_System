@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const foodItemSchema = new mongoose.Schema({
+const dishSchema = new mongoose.Schema({
 
     name: { 
         type: String, 
@@ -30,13 +30,14 @@ const foodItemSchema = new mongoose.Schema({
          "https://res.cloudinary.com/dkmutafep/image/upload/v1762113987/default_foodItem_cbzdgo.jpg"
     },
 
-    isAvailable: {
-         type: Boolean,
-         default: false 
+    stock: {
+        type: Number,
+        default: 0,
+        min: 0
     },
 
 },
 { timestamps: true }
 );
 
-export const FoodItem = mongoose.model("FoodItem", foodItemSchema);
+export const Dish = mongoose.model("Dish", dishSchema);

@@ -19,7 +19,9 @@ app.use(cookieParser());
 //import Routes
 
 import {userRoute} from "./routes/user.route.js";
+import { foodItemRoute } from "./routes/foodItem.routes.js";
 
 app.use("/api/v1/users", userRoute);
+app.use("/api/v1/foodItems", foodItemRoute);
 
 export default app;
