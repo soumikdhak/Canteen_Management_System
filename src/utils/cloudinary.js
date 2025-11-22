@@ -1,5 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import streamifier from "streamifier";
+import { apiError } from "./apiError.js";
+import { asyncHandler } from "./asyncHandler.js";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -8,25 +10,23 @@ cloudinary.config({
 });
 
 // Upload file buffer to Cloudinary
-export const uploadOnCloudinary = async (fileBuffer) => {
-  try {
-    if (!fileBuffer) throw new Error("No file buffer provided");
-
-    const result = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        { resource_type: "auto" },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
+export const uploadOnCloudinary = (fileBuffer) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { resource_type: "image" },
+      (error, result) => {
+        if (error) {
+          console.error("Cloudinary Upload Error:", error);
+          reject(new apiError(500, "Cloudinary upload failed"));
+        } else {
+          resolve(result);
         }
-      );
-      streamifier.createReadStream(fileBuffer).pipe(uploadStream);
-    });
+      }
+    );
 
-    console.log("File uploaded to Cloudinary:", result.secure_url);
-    return result;
-  } catch (error) {
-    console.error("Cloudinary Upload Error:", error.message);
-    throw new Error("Cloudinary upload failed");
-  }
+    // IMPORTANT FIX
+    streamifier.createReadStream(fileBuffer).pipe(uploadStream);
+    
+  });
 };
+
