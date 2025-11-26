@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 const studentSchema = new mongoose.Schema({
-  studentCode: { type: String, trim: true, unique:true}, // removed "required"
+  studentCode: { type: String, trim: true, unique:true,sparse: true}, // removed "required"
   department: { type: String, trim: true },
   batch: { type: Number },
   balance: { type: Number, default: 0 },
@@ -11,7 +11,7 @@ const studentSchema = new mongoose.Schema({
 }, { _id: false }); // prevent new _id for subdocument
 
 const staffSchema = new mongoose.Schema({
-  age: Number,
+  DOB: Date,
   address: { type: String, trim: true },
   position: { type: String, trim: true },
   salary: { type: Number, default: 0 },

@@ -52,7 +52,9 @@ const updatefoodItem = asyncHandler(async (req, res) => {
       new: true,
       runValidators: true,
   });
+  
   if (!updatedItem) throw new apiError(404, "Dish not found");
+
   return res.status(200).json(
       new apiResponse(200, { updatedItem }, "Food item updated successfully!")
   );
