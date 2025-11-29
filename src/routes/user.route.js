@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { logout, registerUser, refreshAccessToken, updateProfilepic, getAllStaffs, getStaff, updatePassword, deletestaff, updateStaffData } from "../controllers/user.controllers.js";
+import { logout, registerUser, refreshAccessToken, updateProfilepic, getAllStaffs, getStaff, updatePassword, deletestaff, updateStaffData, getallStudents, getstudent, deleteStudent } from "../controllers/user.controllers.js";
 import { loginUser } from "../controllers/user.controllers.js";
 import upload from "../middlewares/multer.middleware.js";
 import { verifyJwt } from "../middlewares/auth.middleware.js";
@@ -70,6 +70,27 @@ router.route("/updateStaffData/:id").patch(
     authorizeRoles("admin"),
     upload.none(),
     updateStaffData
+)
+
+//get all list of students
+router.route("/allStudents").get(
+    verifyJwt,
+    authorizeRoles("admin"),
+    getallStudents
+)
+
+//get particular student by id
+router.route("/getstudent/:id").get(
+    verifyJwt,
+    authorizeRoles("admin"),
+    getstudent
+)
+
+//delete student by id
+router.route("/deleteStudent/:id").delete(
+    verifyJwt,
+    authorizeRoles("admin","student"),
+    deleteStudent
 )
 
 export { router as userRoute };

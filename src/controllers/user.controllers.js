@@ -284,12 +284,14 @@ const getAllStaffs = asyncHandler(async (req, res) => {
 
   if(!staffs) throw new apiError(400, "Staff List is not able to fetch!");
 
-  return res.status(200).json({
-    success: true,
-    message: "Staffs data fetched successfully!",
-    count: staffs.length,
-    staffs
-  });
+  return res.status(200).json(
+    new apiResponse(
+      200,
+      staffs.length,
+      {staffs},
+      "Staffs list fetched successfully"
+    )
+  );
 });
 
 
@@ -297,7 +299,7 @@ const getAllStaffs = asyncHandler(async (req, res) => {
 const getStaff = asyncHandler(async (req, res) => {
     const {id} = req.params;
   
-    const user = await User.findById(id);
+    const user = await User.findById(id).select("-password -refreshToken");
   
     if (!user) {
       throw new apiError(404, "User not found");
@@ -308,7 +310,7 @@ const getStaff = asyncHandler(async (req, res) => {
     .json(
       new apiResponse(
         200,
-        user,
+        {user},
         "Staff data fetched successfully")
     )
 })
@@ -378,9 +380,59 @@ const updateStaffData = asyncHandler(async (req, res) => {
   if (!updatedStaff) throw new apiError(404, "Staff not found");
 
   return res.status(200).json(
-    new apiResponse(200, updatedStaff, "Staff data updated successfully!")
+    new apiResponse(200, {updatedStaff}, "Staff data updated successfully!")
   );
 });
+
+//get the list of students
+const getallStudents = asyncHandler(async (req, res) => {
+  const students = await User.find({ role: "student" }).select("-password -refreshToken");
+
+  if(!students) throw new apiError(400, "Staff List is not able to fetch!");
+
+  return res.status(200).json(
+    new apiResponse(
+      200,
+      students.length,
+      {students},
+      "Students list fetched successfully"
+    )
+  )
+})
+
+//get particular student by id
+const getstudent = asyncHandler(async (req, res) => {
+  const {id} = req.params;
+
+  const student = await User.findById(id).select("-password -refreshToken");
+
+  if(!student) throw new apiError("404","Student not found");
+
+  return res 
+  .status(200)
+  .json(
+    new apiResponse(
+        200,
+        {student},
+        "Student data fetched successfully")
+  )
+})
+
+const deleteStudent = asyncHandler (async (req, res)=>{
+  const {id} =req.params;
+
+  const student =await User.findByIdAndDelete(id);
+
+  if(!student) throw new apiError(404,"User not found!");
+
+  return res
+  .status(200)
+  .json(
+    new apiResponse(
+      200, "Account Deleted Successsfully!"
+    )
+  )
+})
 
 export { 
   registerUser, 
@@ -388,9 +440,12 @@ export {
   logout, 
   refreshAccessToken, 
   updateProfilepic, 
-  getAllStaffs, 
-  getStaff, 
   updatePassword, 
+  getAllStaffs,
+  getStaff, 
   deletestaff,
-  updateStaffData 
+  updateStaffData,
+  getallStudents,
+  getstudent,
+  deleteStudent
 };
