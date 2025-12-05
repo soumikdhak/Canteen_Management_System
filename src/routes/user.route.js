@@ -76,6 +76,7 @@ router.route("/updateStaffData/:id").patch(
 router.route("/allStudents").get(
     verifyJwt,
     authorizeRoles("admin"),
+    upload.none(),
     getallStudents
 )
 
@@ -93,4 +94,4 @@ router.route("/deleteStudent/:id").delete(
     deleteStudent
 )
 
-export { router as userRoute };
+export { router as userRoute }; 

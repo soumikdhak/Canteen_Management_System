@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { addfoodItem, deletefoodItem, foodItem, getAllItems, updatefoodItem, updateImage } from "../controllers/foodItem.controllers.js";
+import { addfoodItem, deletefoodItem, foodItem, getAllItems, getFoods, updatefoodItem, updateImage } from "../controllers/foodItem.controllers.js";
 import { verifyJwt } from "../middlewares/auth.middleware.js";
 import { authorizeRoles } from "../middlewares/authorizeRoles.middleware.js";
 import upload from "../middlewares/multer.middleware.js";
@@ -48,6 +48,13 @@ router.route("/allitems").get(
 router.route("/foodItem/:id").get(
     verifyJwt,
     foodItem
+)
+
+//get food accordding to search  
+router.route("/foods").get(
+    verifyJwt,
+    upload.none(),
+    getFoods
 )
 
 export { router as foodItemRoute };

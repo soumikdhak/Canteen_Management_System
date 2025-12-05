@@ -149,4 +149,77 @@ const foodItem = asyncHandler(async (req,res) => {
   )
 })
 
-export {addfoodItem, updatefoodItem, updateImage, deletefoodItem, getAllItems, foodItem};
+const getFoods = asyncHandler(async (req, res) => {
+
+  const {
+    search,
+    category,
+    minPrice,
+    maxPrice,
+    sort,
+    page = 1,
+    limit = 5,
+  } = req.query;
+
+  let query = {};
+
+  //  Search
+  if (search) {
+    query.name = { $regex: search, $options: "i" };
+  }
+
+  //  Category filter
+  if (category) {
+    query.category = category;
+  }
+
+  //  Price filter
+  if (minPrice || maxPrice) {
+    query.price = {};
+
+    if (minPrice) query.price.$gte = Number(minPrice);
+    if (maxPrice) query.price.$lte = Number(maxPrice);
+  }
+
+  //  Sort options
+  let sortOption = {};
+
+  if (sort === "price_low_high") {
+    sortOption.price = 1;
+  }
+
+  if (sort === "price_high_low") {
+    sortOption.price = -1;
+  }
+
+  if (sort === "newest") {
+    sortOption.createdAt = -1;
+  }
+
+  //  Pagination logic
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const foods = await Dish.find(query)
+    .sort(sortOption)
+    .skip(skip)
+    .limit(Number(limit));
+
+  const total = await Dish.countDocuments(query);
+
+  return res.status(200).json(
+    new apiResponse(
+      200,
+      {
+        count: foods.length,
+        total,
+        page: Number(page),
+        totalPages: Math.ceil(total / limit),
+        foods,
+      },
+      "Here are all listed Items"
+    )
+  );
+});
+
+
+export {addfoodItem, updatefoodItem, updateImage, deletefoodItem, getAllItems, foodItem, getFoods};

@@ -46,7 +46,13 @@ const registerUser = asyncHandler(async (req, res) => {
 
   //  4. Attach role-specific data
   if (role === "student") {
-    user.studentInfo = { studentCode, department, batch };
+      const data = req.body.studentInfo || req.body;
+
+      user.studentInfo = {
+        studentCode: data.studentCode,
+        department: data.department,
+        batch: data.batch
+      }
   } else if (role === "staff") {
     user.staffInfo = { age, address, position, shift, joiningDate };
   } else if (role === "admin") {
@@ -386,22 +392,101 @@ const updateStaffData = asyncHandler(async (req, res) => {
 
 //get the list of students
 const getallStudents = asyncHandler(async (req, res) => {
-  const students = await User.find({ role: "student" }).select("-password -refreshToken");
 
-  if(!students) throw new apiError(400, "Staff List is not able to fetch!");
+    console.log("✅ getallStudents CALLED");
 
-  return res.status(200).json(
-    new apiResponse(
-      200,
-      students.length,
-      {students},
-      "Students list fetched successfully"
-    )
-  )
-})
+  
+  // const {
+  //   role,
+  //   search,
+  //   studentCode,
+  //   department,
+  //   batch,
+  //   minCode,
+  //   maxCode,
+  //   sort,
+  //   page = 1,
+  //   limit = 10
+  // } = req.query;
+
+  // let query = {};
+
+  // // Role filter
+  // if(role)
+  //   query.role = {$regex: role, $options: "i"};
+
+  // // Name search
+  // if(search)
+  //   query.name = {$regex: search, $options: "i"};
+
+  // // Nested filters ✅
+  // if(studentCode)
+  //   query["studentInfo.studentCode"] = studentCode;
+
+  // if(department)
+  //   query["studentInfo.department"] = department;
+
+  // if(batch)
+  //   query["studentInfo.batch"] = Number(batch);
+
+  // // Code range filter ✅
+  // if(minCode || maxCode) {
+  //   query["studentInfo.studentCode"] = {};
+
+  //   if(minCode)
+  //     query["studentInfo.studentCode"].$gte = minCode;
+
+  //   if(maxCode)
+  //     query["studentInfo.studentCode"].$lte = maxCode;
+  // }
+
+  // // Sorting ✅
+  // let sortOption = {};
+
+  // if(sort === "code_low_high")
+  //   sortOption["studentInfo.studentCode"] = 1;
+
+  // if(sort === "code_high_low")
+  //   sortOption["studentInfo.studentCode"] = -1;
+
+  // if(sort === "newest")
+  //   sortOption.createdAt = -1;
+
+  // // Pagination
+  // const skip = (Number(page) - 1) * Number(limit);
+
+  // console.log("🟡 FINAL QUERY => ", query);
+  // console.log("REQ QUERY => ", req.query);
+
+
+  // const students = await User.find(query)
+  //     .sort(sortOption)
+  //     .skip(skip)
+  //     .limit(Number(limit))
+  //     .select("-password -refreshToken");
+
+  // const total = await User.countDocuments(query);
+
+  // return res.status(200).json(
+  //   new apiResponse(
+  //     200,
+  //     students.length,
+  //     {
+  //       count: students.length,
+  //       total,
+  //       page: Number(page),
+  //       totalPages: Math.ceil(total / limit),
+  //       students,
+  //     },
+  //     "Students list fetched successfully"
+  //   )
+  // );
+});
+
 
 //get particular student by id
 const getstudent = asyncHandler(async (req, res) => {
+
   const {id} = req.params;
 
   const student = await User.findById(id).select("-password -refreshToken");
