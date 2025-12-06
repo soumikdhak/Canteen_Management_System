@@ -47,6 +47,7 @@ router.route("/changePassword").patch(
 router.route("/allstaffs").get(
     verifyJwt,
     authorizeRoles("admin"),
+    upload.none(),
     getAllStaffs
 );
 

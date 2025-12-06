@@ -20,6 +20,7 @@ const registerUser = asyncHandler(async (req, res) => {
     address,
     position,
     shift,
+    salary,
     joiningDate,
     studentCode,
     department,
@@ -46,15 +47,16 @@ const registerUser = asyncHandler(async (req, res) => {
 
   //  4. Attach role-specific data
   if (role === "student") {
-      const data = req.body.studentInfo || req.body;
+    user.studentInfo = {studentCode, department, batch}
+      // const data = req.body.studentInfo || req.body;
 
-      user.studentInfo = {
-        studentCode: data.studentCode,
-        department: data.department,
-        batch: data.batch
-      }
+      // user.studentInfo = {
+      //   studentCode: data.studentCode,
+      //   department: data.department,
+      //   batch: data.batch
+      // }
   } else if (role === "staff") {
-    user.staffInfo = { age, address, position, shift, joiningDate };
+    user.staffInfo = { age, address, position, salary, shift, joiningDate };
   } else if (role === "admin") {
     user.adminInfo = { designation };
   }
@@ -286,20 +288,56 @@ const updatePassword = asyncHandler(async (req, res) => {
 
  //get list of all staff
 const getAllStaffs = asyncHandler(async (req, res) => {
-  const staffs = await User.find({ role: "staff" }).select("-password -refreshToken");
 
-  if(!staffs) throw new apiError(400, "Staff List is not able to fetch!");
+  const { name, position, shift, sort, page = 1, limit = 10 } = req.query;
+
+  let query = {};
+
+  // Always staff only
+  query.role = "staff";
+
+  // Search by name
+  if (name) {
+    query.name = { $regex: name, $options: "i" };
+  }
+
+  // Nested filters
+  if (position)
+    query["staffInfo.position"] = position;
+
+  if (shift)
+    query["staffInfo.shift"] = shift;
+
+  // Sorting
+  const sortOption = {};
+  if (sort === "newest") sortOption.createdAt = -1;
+
+  // Pagination
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const staffs = await User.find(query)
+    .sort(sortOption)
+    .skip(skip)
+    .limit(Number(limit))
+    .select("-password -refreshToken");
+
+  const total = await User.countDocuments(query);
 
   return res.status(200).json(
     new apiResponse(
       200,
       staffs.length,
-      {staffs},
-      "Staffs list fetched successfully"
+      {
+        count: staffs.length,
+        total,
+        page: Number(page),
+        totalPages: Math.ceil(total / limit),
+        staffs
+      },
+      "Staff list fetched successfully"
     )
   );
 });
-
 
 //get particular staff by id
 const getStaff = asyncHandler(async (req, res) => {
@@ -390,99 +428,93 @@ const updateStaffData = asyncHandler(async (req, res) => {
   );
 });
 
-//get the list of students
 const getallStudents = asyncHandler(async (req, res) => {
+  const {
+    role,
+    search,
+    studentCode,
+    department,
+    batch,
+    minCode,
+    maxCode,
+    sort,
+    page = 1,
+    limit = 10
+  } = req.query;
 
-    console.log("✅ getallStudents CALLED");
+  let query = {};
 
-  
-  // const {
-  //   role,
-  //   search,
-  //   studentCode,
-  //   department,
-  //   batch,
-  //   minCode,
-  //   maxCode,
-  //   sort,
-  //   page = 1,
-  //   limit = 10
-  // } = req.query;
+  // Role filter
+  query.role ="student";
 
-  // let query = {};
+  // Name search
+  if(search)
+    query.name = {$regex: search, $options: "i"};
 
-  // // Role filter
-  // if(role)
-  //   query.role = {$regex: role, $options: "i"};
+  // Nested filters ✅
+  if(studentCode)
+    query["studentInfo.studentCode"] = studentCode;
 
-  // // Name search
-  // if(search)
-  //   query.name = {$regex: search, $options: "i"};
+  if(department)
+    query["studentInfo.department"] = department;
 
-  // // Nested filters ✅
-  // if(studentCode)
-  //   query["studentInfo.studentCode"] = studentCode;
+  if(batch) 
+    query["studentInfo.batch"] = Number(batch);
 
-  // if(department)
-  //   query["studentInfo.department"] = department;
+  // Code range filter ✅
+  if(minCode || maxCode) {
+    query["studentInfo.studentCode"] = {};
 
-  // if(batch)
-  //   query["studentInfo.batch"] = Number(batch);
+    if(minCode)
+      query["studentInfo.studentCode"].$gte = minCode;
 
-  // // Code range filter ✅
-  // if(minCode || maxCode) {
-  //   query["studentInfo.studentCode"] = {};
+    if(maxCode)
+      query["studentInfo.studentCode"].$lte = maxCode;
+  }
 
-  //   if(minCode)
-  //     query["studentInfo.studentCode"].$gte = minCode;
+  // Sorting ✅
+  let sortOption = {};
 
-  //   if(maxCode)
-  //     query["studentInfo.studentCode"].$lte = maxCode;
-  // }
+  if(sort === "code_low_high")
+    sortOption["studentInfo.studentCode"] = 1;
 
-  // // Sorting ✅
-  // let sortOption = {};
+  if(sort === "code_high_low")
+    sortOption["studentInfo.studentCode"] = -1;
 
-  // if(sort === "code_low_high")
-  //   sortOption["studentInfo.studentCode"] = 1;
+  if(sort === "newest")
+    sortOption.createdAt = -1;
 
-  // if(sort === "code_high_low")
-  //   sortOption["studentInfo.studentCode"] = -1;
-
-  // if(sort === "newest")
-  //   sortOption.createdAt = -1;
-
-  // // Pagination
-  // const skip = (Number(page) - 1) * Number(limit);
+  // Pagination
+  const skip = (Number(page) - 1) * Number(limit);
 
   // console.log("🟡 FINAL QUERY => ", query);
   // console.log("REQ QUERY => ", req.query);
 
 
-  // const students = await User.find(query)
-  //     .sort(sortOption)
-  //     .skip(skip)
-  //     .limit(Number(limit))
-  //     .select("-password -refreshToken");
+  const students = await User.find(query)
+      .sort(sortOption)
+      .skip(skip)
+      .limit(Number(limit))
+      .select("-password -refreshToken");
 
-  // const total = await User.countDocuments(query);
+  const total = await User.countDocuments(query);
 
-  // return res.status(200).json(
-  //   new apiResponse(
-  //     200,
-  //     students.length,
-  //     {
-  //       count: students.length,
-  //       total,
-  //       page: Number(page),
-  //       totalPages: Math.ceil(total / limit),
-  //       students,
-  //     },
-  //     "Students list fetched successfully"
-  //   )
-  // );
-});
-
+  return res.status(200).json(
+    new apiResponse(
+      200,
+      students.length,
+      {
+        count: students.length,
+        total,
+        page: Number(page),
+        totalPages: Math.ceil(total / limit),
+        students,
+      },
+      "Students list fetched successfully"
+    )
+  );
+  
+})
 
 //get particular student by id
 const getstudent = asyncHandler(async (req, res) => {
