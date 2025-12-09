@@ -5,7 +5,7 @@ const orderSchema = new mongoose.Schema({
 
     items: [
         {
-            foodItem: { type: mongoose.Schema.Types.ObjectId, ref: "FoodItem", required: true },
+            foodItem: { type: mongoose.Schema.Types.ObjectId, ref: "Dish", required: true },
             quantity: { type: Number, required: true },
             price: { type: Number, required: true  },
         }
@@ -13,7 +13,6 @@ const orderSchema = new mongoose.Schema({
 
     totalAmount: {
          type: Number, 
-         required: true 
     },
     paymentStatus: { 
         type: String, 
