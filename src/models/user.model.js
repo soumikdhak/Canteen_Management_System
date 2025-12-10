@@ -7,7 +7,7 @@ const studentSchema = new mongoose.Schema({
   department: { type: String, trim: true },
   batch: { type: Number },
   balance: { type: Number, default: 0 },
-  orderHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
+  //orderHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
 }, { _id: false }); // prevent new _id for subdocument
 
 const staffSchema = new mongoose.Schema({
