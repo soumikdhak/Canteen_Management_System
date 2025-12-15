@@ -113,5 +113,78 @@ const getOrderById = asyncHandler (async (req, res) => {
     )
 })
 
+const getPendingOrders = asyncHandler(async (req, res) => {
 
-export {makeOrder, getOrderListofUser, getOrderById};
+  const pendingOrders = await Order.find({ orderStatus: "Placed" })
+    .sort({ createdAt: 1 });
+
+  return res.status(200).json(
+    new apiResponse(
+      200,
+      {
+        count: pendingOrders.length,
+        pendingOrders
+      },
+      "Pending orders are here"
+    )
+  );
+});
+
+const serveOrder = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const order = await Order.findByIdAndUpdate(
+    id,
+    {
+      $set: {
+        token: null,
+        orderStatus: "Served"
+      }
+    },
+    { new: true }
+  );
+
+  if (!order) {
+    throw new apiError(404, "Order not found");
+  }
+
+  return res.status(200).json(
+    new apiResponse(
+      200,
+      order,
+      "Order is served!"
+    )
+  );
+});
+
+const getOrderByAdminOnly = asyncHandler((req, res) => {
+})
+
+const cancelOrder = asyncHandler(async (req, res) => {
+  const {id} = req.params;
+
+  const order = await Order.findById(id);
+
+  if(!order) throw new apiError(404,"Order not Found!");
+
+  if(order.orderStatus==="Preparing" || order.orderStatus==="Served")
+    throw new apiError(400,"Order Can't be cancelled now!");
+
+  if(order.orderStatus==="Cancelled")
+    throw new apiError(400,"Order already Cancelled!") 
+
+  order.orderStatus = "Cancelled";
+
+  await order.save();
+
+  return res.status(200).json(
+    new apiResponse(
+      200,
+      order,
+      "Order is cancelled!"
+    )
+  );
+
+});
+
+export {makeOrder, getOrderListofUser, getOrderById, getPendingOrders, serveOrder, getOrderByAdminOnly, cancelOrder};
